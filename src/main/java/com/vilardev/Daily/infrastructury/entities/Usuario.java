@@ -2,8 +2,13 @@ package com.vilardev.Daily.infrastructury.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 @Getter
 @Setter
@@ -12,7 +17,7 @@ import java.util.List;
 @Entity
 @Table(name = "usuario")
 @Builder
-public class Usuario {
+public class Usuario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,23 +40,61 @@ public class Usuario {
     @Builder.Default // Inicializa a lista para evitar NullPointerException
     private List<Telefone> telefones = new java.util.ArrayList<>();
 
+    // Roles (Many-to-Many)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
+
 
     // MÉTODOS PARA GERENCIAR O RELACIONAMENTO BIDIRECIONAL
 
     public void addEndereco(Endereco endereco) {
-        // 1. Adiciona à lista de endereços do usuário
-        this.enderecos.add(endereco);
-
-        // 2. CRÍTICO: Seta a referência de volta, garantindo o relacionamento bidirecional
+        if (endereco == null) return;
         endereco.setUsuario(this);
+        this.enderecos.add(endereco);
     }
 
     public void addTelefone(Telefone telefone) {
-        // 1. Adiciona à lista de telefones do usuário
-        this.telefones.add(telefone);
-
-        // 2. CRÍTICO: Seta a referência de volta
+        if (telefone == null) return;
         telefone.setUsuario(this);
+        this.telefones.add(telefone);
     }
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
