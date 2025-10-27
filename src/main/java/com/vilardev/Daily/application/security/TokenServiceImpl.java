@@ -1,8 +1,6 @@
 package com.vilardev.Daily.application.security;
 
 import com.vilardev.Daily.infrastructury.entities.Usuario;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
