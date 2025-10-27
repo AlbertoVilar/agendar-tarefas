@@ -21,9 +21,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
-                );
+                )
+                // enable HTTP Basic so clients can send Basic credentials
+                .httpBasic();
+
+        // Allow H2 console frames (ONLY for development/testing)
+        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         // Exemplo (comentado) de como registrar o filtro JWT que implementa a autenticação
         // baseada em TokenService (geração/validação) e UserDetailsService (carrega usuário).
