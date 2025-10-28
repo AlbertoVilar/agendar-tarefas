@@ -1,5 +1,6 @@
 package com.vilardev.Daily.infrastructury.security;
 
+import com.vilardev.Daily.application.security.TokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,13 +8,26 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final TokenService tokenService;
+    private final UserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(TokenService tokenService, UserDetailsService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.tokenService = tokenService;
+        this.userDetailsService = userDetailsService;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -24,23 +38,17 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                // enable HTTP Basic so clients can send Basic credentials
+                // opcional: manter HTTP Basic habilitado para testes locais
                 .httpBasic();
 
         // Allow H2 console frames (ONLY for development/testing)
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
-        // Exemplo (comentado) de como registrar o filtro JWT que implementa a autenticação
-        // baseada em TokenService (geração/validação) e UserDetailsService (carrega usuário).
-        // Quando você tiver esses beans disponíveis, descomente e adapte conforme necessário:
-        //
-        // // obtenha os beans TokenService e UserDetailsService via injeção (por construtor da config)
-        // // TokenService tokenService = ...;
-        // // org.springframework.security.core.userdetails.UserDetailsService uds = ...;
-        // // Crie o filtro e registre antes do UsernamePasswordAuthenticationFilter
-        // // com o nome completo da classe para evitar imports desnecessários:
-        // JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(tokenService, uds);
-        // http.addFilterBefore(jwtFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+        // Registrar filtro JWT para autenticação via Bearer Token
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // Garantir que o AuthenticationManager use nosso UserDetailsService e PasswordEncoder
+        http.authenticationProvider(authenticationProvider());
 
         return http.build();
     }
@@ -53,5 +61,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 }

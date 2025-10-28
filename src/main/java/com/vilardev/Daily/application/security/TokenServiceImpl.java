@@ -53,6 +53,7 @@ public class TokenServiceImpl implements TokenService {
         try {
             return parseClaims(token) != null;
         } catch (Exception ex) {
+            System.out.println("TokenServiceImpl - validateToken exception: " + ex.getClass().getName() + ": " + ex.getMessage());
             return false;
         }
     }
@@ -64,52 +65,18 @@ public class TokenServiceImpl implements TokenService {
             var claims = parseClaims(token);
             return claims == null ? null : claims.getSubject();
         } catch (Exception ex) {
+            System.out.println("TokenServiceImpl - getUsernameFromToken exception: " + ex.getClass().getName() + ": " + ex.getMessage());
             return null;
         }
     }
 
-    // Reflection-based parser to avoid compile-time dependency on parserBuilder API
+    // JJWT 0.12.x parser implementation
     private io.jsonwebtoken.Claims parseClaims(String token) {
         try {
-            Class<?> jwtsClass = Class.forName("io.jsonwebtoken.Jwts");
-
-            // Try parserBuilder() first
-            try {
-                java.lang.reflect.Method parserBuilderMethod = jwtsClass.getMethod("parserBuilder");
-                Object builder = parserBuilderMethod.invoke(null);
-
-                // try setSigningKey(Key) or setSigningKey(byte[])
-                try {
-                    java.lang.reflect.Method setKey = builder.getClass().getMethod("setSigningKey", java.security.Key.class);
-                    setKey.invoke(builder, secretKey);
-                } catch (NoSuchMethodException e) {
-                    java.lang.reflect.Method setKey = builder.getClass().getMethod("setSigningKey", byte[].class);
-                    setKey.invoke(builder, (Object) secretKey.getEncoded());
-                }
-
-                Object parser = builder.getClass().getMethod("build").invoke(builder);
-                Object jws = parser.getClass().getMethod("parseClaimsJws", String.class).invoke(parser, token);
-                Object body = jws.getClass().getMethod("getBody").invoke(jws);
-                return (io.jsonwebtoken.Claims) body;
-            } catch (NoSuchMethodException ns) {
-                // Fallback to older parser() API
-                java.lang.reflect.Method parserMethod = jwtsClass.getMethod("parser");
-                Object parser = parserMethod.invoke(null);
-
-                // try setSigningKey(Key) or setSigningKey(byte[])
-                try {
-                    java.lang.reflect.Method setKey = parser.getClass().getMethod("setSigningKey", java.security.Key.class);
-                    setKey.invoke(parser, secretKey);
-                } catch (NoSuchMethodException e) {
-                    java.lang.reflect.Method setKey = parser.getClass().getMethod("setSigningKey", byte[].class);
-                    setKey.invoke(parser, (Object) secretKey.getEncoded());
-                }
-
-                Object jws = parser.getClass().getMethod("parseClaimsJws", String.class).invoke(parser, token);
-                Object body = jws.getClass().getMethod("getBody").invoke(jws);
-                return (io.jsonwebtoken.Claims) body;
-            }
+            var jwt = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+            return jwt.getPayload();
         } catch (Exception ex) {
+            System.out.println("TokenServiceImpl - parseClaims exception: " + ex.getClass().getName() + ": " + ex.getMessage());
             return null;
         }
     }
