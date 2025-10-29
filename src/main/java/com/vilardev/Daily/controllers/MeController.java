@@ -1,5 +1,6 @@
 package com.vilardev.Daily.controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,7 @@ import java.util.Map;
 public class MeController {
 
     @GetMapping("/me")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> me(@AuthenticationPrincipal UserDetails user) {
         List<String> roles = user.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
