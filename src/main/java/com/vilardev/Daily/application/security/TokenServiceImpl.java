@@ -3,6 +3,8 @@ package com.vilardev.Daily.application.security;
 import com.vilardev.Daily.infrastructury.entities.Usuario;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class TokenServiceImpl implements TokenService {
 
     private static final String ISSUER = "daily-tasks-api";
+    private static final Logger log = LoggerFactory.getLogger(TokenServiceImpl.class);
 
     private final SecretKey secretKey;
     private final long expirationMinutes;
@@ -26,6 +29,9 @@ public class TokenServiceImpl implements TokenService {
                             @Value("${api.security.token.expiration-minutes}") long expirationMinutes) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMinutes = expirationMinutes;
+        if (log.isDebugEnabled()) {
+            log.debug("TokenServiceImpl initialized. ExpirationMinutes={} keyLength={} bytes", expirationMinutes, secretKey.getEncoded().length);
+        }
     }
 
     @Override
@@ -37,6 +43,10 @@ public class TokenServiceImpl implements TokenService {
         String roles = usuario.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+
+        if (log.isDebugEnabled()) {
+            log.debug("Generating token. subject={} roles={} expInMinutes={}", usuario.getUsername(), roles, expirationMinutes);
+        }
 
         return Jwts.builder()
                 .setIssuer(ISSUER)
@@ -51,9 +61,13 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public boolean validateToken(String token) {
         try {
-            return parseClaims(token) != null;
+            boolean ok = parseClaims(token) != null;
+            if (log.isDebugEnabled()) {
+                log.debug("validateToken -> {}", ok);
+            }
+            return ok;
         } catch (Exception ex) {
-            System.out.println("TokenServiceImpl - validateToken exception: " + ex.getClass().getName() + ": " + ex.getMessage());
+            log.error("validateToken exception: {} - {}", ex.getClass().getName(), ex.getMessage(), ex);
             return false;
         }
     }
@@ -65,7 +79,7 @@ public class TokenServiceImpl implements TokenService {
             var claims = parseClaims(token);
             return claims == null ? null : claims.getSubject();
         } catch (Exception ex) {
-            System.out.println("TokenServiceImpl - getUsernameFromToken exception: " + ex.getClass().getName() + ": " + ex.getMessage());
+            log.error("getUsernameFromToken exception: {} - {}", ex.getClass().getName(), ex.getMessage(), ex);
             return null;
         }
     }
@@ -74,9 +88,12 @@ public class TokenServiceImpl implements TokenService {
     private io.jsonwebtoken.Claims parseClaims(String token) {
         try {
             var jwt = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+            if (log.isDebugEnabled()) {
+                log.debug("parseClaims OK. subject={} exp={} issuer={}", jwt.getPayload().getSubject(), jwt.getPayload().getExpiration(), jwt.getPayload().getIssuer());
+            }
             return jwt.getPayload();
         } catch (Exception ex) {
-            System.out.println("TokenServiceImpl - parseClaims exception: " + ex.getClass().getName() + ": " + ex.getMessage());
+            log.error("parseClaims exception: {} - {}", ex.getClass().getName(), ex.getMessage(), ex);
             return null;
         }
     }
