@@ -32,7 +32,21 @@ class AuthMeIntegrationTest {
 
     @Test
     void login_shouldReturnBearerToken() {
-        var request = new LoginRequest("albertovilar1@gmail.com", "132747");
+        // Register a new user first
+        var registerBody = Map.of(
+                "nome", "Teste",
+                "email", "teste_login@example.com",
+                "senha", "123456"
+        );
+        ResponseEntity<Map> registerResp = restTemplate.postForEntity(
+                baseUrl() + "/auth/register",
+                registerBody,
+                Map.class
+        );
+        assertThat(registerResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        // Then login
+        var request = new LoginRequest("teste_login@example.com", "123456");
         ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
                 baseUrl() + "/auth/login",
                 request,
@@ -46,16 +60,24 @@ class AuthMeIntegrationTest {
     }
 
     @Test
-    void me_shouldReturnUsernameAndRoles_whenAuthenticated() {
-        // Login first
-        var request = new LoginRequest("albertovilar1@gmail.com", "132747");
+    void me_shouldReturn403_whenUserHasNoAdminRole() {
+        // Register a new user with default ROLE_USER
+        var registerBody = Map.of(
+                "nome", "Teste",
+                "email", "teste_me@example.com",
+                "senha", "123456"
+        );
+        var registerResp = restTemplate.postForEntity(baseUrl() + "/auth/register", registerBody, Map.class);
+        assertThat(registerResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        // Login
+        var request = new LoginRequest("teste_me@example.com", "123456");
         var loginResp = restTemplate.postForEntity(baseUrl() + "/auth/login", request, LoginResponse.class);
         assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(loginResp.getBody()).isNotNull();
-
         String token = loginResp.getBody().token();
 
-        // Call /me with Bearer token
+        // Call /me (requires ADMIN) with Bearer token -> expect 403
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
@@ -67,14 +89,6 @@ class AuthMeIntegrationTest {
                 Map.class
         );
 
-        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(meResponse.getBody()).isNotNull();
-        assertThat(meResponse.getBody().get("username")).isEqualTo("albertovilar1@gmail.com");
-
-        Object rolesObj = meResponse.getBody().get("roles");
-        assertThat(rolesObj).isInstanceOf(List.class);
-        @SuppressWarnings("unchecked")
-        List<String> roles = ((List<?>) rolesObj).stream().map(Object::toString).toList();
-        assertThat(roles).contains("ROLE_USER", "ROLE_ADMIN");
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 }

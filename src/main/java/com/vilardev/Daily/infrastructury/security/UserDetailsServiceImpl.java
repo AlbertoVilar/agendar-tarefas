@@ -17,8 +17,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username)  {
-        // O Optional evita NullPointerException e torna o código mais seguro
-        return usuarioRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com e-mail: " + username));
+        // Normaliza o e-mail antes de buscar
+        String normalized = username == null ? null : username.trim().toLowerCase();
+        if (normalized == null || normalized.isEmpty()) {
+            throw new UsernameNotFoundException("Usuário não encontrado: e-mail vazio");
+        }
+        return usuarioRepository.findByEmail(normalized)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com e-mail: " + normalized));
     }
 }

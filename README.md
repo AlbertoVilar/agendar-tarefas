@@ -27,13 +27,12 @@ java -jar target/daily-0.0.1-SNAPSHOT.jar
 java -jar target/daily-0.0.1-SNAPSHOT.jar --spring.profiles.active=test --server.port=8080
 ```
 
-## Seed de Usuário
-O projeto carrega um usuário ADMIN/USER via `data.sql`:
-- Email: `albertovilar1@gmail.com`
-- Senha: `132747`
-- Roles: `ROLE_USER`, `ROLE_ADMIN`
+## Seed de Roles
+O projeto carrega apenas as roles via `data.sql`:
+- `ROLE_USER`
+- `ROLE_ADMIN`
 
-Observação: a senha no banco fica com hash BCrypt; a seed usa função Java exposta no H2 (ALIAS) para gerar o hash no load.
+Não há mais usuário padrão. Crie um usuário via API `POST /auth/register` passando `nome`, `email` e `senha` (endereços/telefones opcionais). A senha é criptografada pelo serviço na criação.
 
 ## Autenticação e Autorização
 - Login: `POST /auth/login`
@@ -58,7 +57,14 @@ Observação: a senha no banco fica com hash BCrypt; a seed usa função Java ex
   - 401: sem token Bearer ou token inválido
 
 ## Exemplos com curl
-Login e captura do token:
+Registro, login e captura do token:
+```
+curl -s -X POST "http://localhost:8080/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Alberto","email":"alberto@example.com","senha":"132747"}'
+```
+
+Agora faça o login:
 ```
 curl -s -X POST "http://localhost:8080/auth/login" \
   -H "Content-Type: application/json" \
