@@ -1,0 +1,62 @@
+package com.vilardev.Daily.controllers;
+
+import com.vilardev.Daily.dtos.UsuarioRequestDTO;
+import com.vilardev.Daily.dtos.UsuarioResponseDTO;
+import com.vilardev.Daily.services.UsuarioService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.List;
+
+@RestController
+@RequestMapping("/usuarios")
+public class UsuarioController {
+
+    private final UsuarioService usuarioService;
+
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
+    @PostMapping
+    public ResponseEntity<UsuarioResponseDTO> create(@RequestBody UsuarioRequestDTO requestDTO) {
+        // TODO: implementar lógica no service
+        UsuarioResponseDTO created = usuarioService.createUser(requestDTO);
+        // TODO: ajustar Location com o ID real retornado
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .location(URI.create("/usuarios/" + (created != null ? created.id() : "")))
+                .body(created);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> getById(@PathVariable Long id) {
+        // TODO: implementar lógica no service
+        UsuarioResponseDTO dto = usuarioService.getUserById(id);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UsuarioResponseDTO>> list() {
+        // TODO: implementar lógica no service
+        List<UsuarioResponseDTO> list = usuarioService.listUsers();
+        return ResponseEntity.ok(list);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id,
+                                                     @RequestBody UsuarioRequestDTO requestDTO) {
+        // TODO: implementar lógica no service
+        UsuarioResponseDTO updated = usuarioService.updateUser(id, requestDTO);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        // TODO: implementar lógica no service
+        usuarioService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+}
