@@ -20,7 +20,7 @@ public class TelefoneController {
 
     public TelefoneController(TelefoneService telefoneService, TelefoneMapper telefoneMapper) {
         this.telefoneService = telefoneService;
-      
+
     }
 
     @PostMapping
