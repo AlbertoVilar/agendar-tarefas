@@ -51,6 +51,14 @@ public class UsuarioController {
         return ResponseEntity.ok(list);
     }
 
+    // Atualiza os dados de um usuário por ID (ADMIN ou fluxo específico)
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> updateById(@PathVariable Long id,
+                                                         @RequestBody UsuarioUpdateDTO dto) {
+        UsuarioResponseDTO updated = usuarioService.updateUser(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
 
     // Atualiza os dados do usuário autenticado (email extraído do token)
     @PutMapping("/me")
