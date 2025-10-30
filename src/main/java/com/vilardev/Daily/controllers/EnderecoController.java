@@ -29,11 +29,32 @@ public class EnderecoController {
                 .body(created);
     }
 
+    // LIST ADDRESSES BY USER
+    @GetMapping
+    public ResponseEntity<java.util.List<EnderecoResponseDTO>> list(@PathVariable Long usuarioId) {
+        java.util.List<EnderecoResponseDTO> list = enderecoService.listByUsuario(usuarioId);
+        return ResponseEntity.ok(list);
+    }
+
+    // GET ADDRESS BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<EnderecoResponseDTO> getById(@PathVariable Long id) {
+        EnderecoResponseDTO dto = enderecoService.getById(id);
+        return ResponseEntity.ok(dto);
+    }
+
     // UPDATE ADDRESS
     @PutMapping("/{id}")
     public ResponseEntity<EnderecoResponseDTO> update(@PathVariable Long id,
                                                       @RequestBody EnderecoRequestDTO requestDTO) {
         EnderecoResponseDTO updated = enderecoService.update(id, requestDTO);
         return ResponseEntity.ok(updated);
+    }
+
+    // DELETE ADDRESS BY ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        enderecoService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

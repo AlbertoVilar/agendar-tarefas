@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EnderecoRespository extends JpaRepository<Endereco, Long> {
+    java.util.List<Endereco> findByUsuario_Id(Long usuarioId);
 }

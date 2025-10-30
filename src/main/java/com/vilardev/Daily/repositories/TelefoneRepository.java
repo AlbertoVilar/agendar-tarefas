@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TelefoneRepository extends JpaRepository<Telefone, Long> {
+    java.util.List<Telefone> findByUsuario_Id(Long usuarioId);
 }

@@ -19,6 +19,20 @@ public class TelefoneController {
         this.telefoneService = telefoneService;
     }
 
+    // LIST TELEFONES BY USER
+    @GetMapping
+    public ResponseEntity<java.util.List<TelefoneResponseDTO>> list(@PathVariable Long usuarioId) {
+        java.util.List<TelefoneResponseDTO> list = telefoneService.listByUsuario(usuarioId);
+        return ResponseEntity.ok(list);
+    }
+
+    // GET TELEFONE BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<TelefoneResponseDTO> getById(@PathVariable Long id) {
+        TelefoneResponseDTO dto = telefoneService.getById(id);
+        return ResponseEntity.ok(dto);
+    }
+
     @PostMapping
     public ResponseEntity<TelefoneResponseDTO> create(@PathVariable Long usuarioId,
                                                       @RequestBody TelefoneRequestDTO requestDTO) {
@@ -35,5 +49,12 @@ public class TelefoneController {
                                                        @RequestBody TelefoneRequestDTO requestDTO) {
         TelefoneResponseDTO updated = telefoneService.update(id, requestDTO);
         return ResponseEntity.ok(updated);
+    }
+
+    // DELETE TELEFONE BY ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        telefoneService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
