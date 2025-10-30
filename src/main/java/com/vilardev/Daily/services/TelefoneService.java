@@ -9,6 +9,8 @@ import com.vilardev.Daily.repositories.TelefoneRepository;
 import com.vilardev.Daily.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class TelefoneService {
@@ -54,19 +56,17 @@ public class TelefoneService {
         return telefoneMapper.toResponseDTO(savedTelefone);
     }
 
-    // LIST BY USER
+    // LIST BY USER (paginated)
     @Transactional(readOnly = true)
-    public java.util.List<TelefoneResponseDTO> listByUsuario(Long usuarioId) {
+    public Page<TelefoneResponseDTO> listByUsuario(Long usuarioId, Pageable pageable) {
         if (usuarioId == null) {
             throw new IllegalArgumentException("ID do usuário não pode ser nulo");
         }
         usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
 
-        java.util.List<Telefone> telefones = telefoneRepository.findByUsuario_Id(usuarioId);
-        return telefones.stream()
-                .map(telefoneMapper::toResponseDTO)
-                .toList();
+        Page<Telefone> telefones = telefoneRepository.findByUsuario_Id(usuarioId, pageable);
+        return telefones.map(telefoneMapper::toResponseDTO);
     }
 
     // GET BY ID

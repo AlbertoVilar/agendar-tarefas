@@ -14,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.HashSet;
@@ -103,21 +105,11 @@ public class UsuarioService {
         return usuarioMapper.toResponseDTO(usuario);
     }
 
-    // LIST ALL USERS
+    // LIST ALL USERS (paginated)
     @Transactional(readOnly = true)
-    public List<UsuarioResponseDTO> listUsers() {
-        // 1. Busca todos os usuários do repositório.
-        List<Usuario> usuarios = usuarioRepository.findAll();
-
-        if (usuarios.isEmpty()) {
-            throw new RuntimeException("Nenhum usuário encontrado");
-        }
-
-        // 2. Mapeia a lista de entidades para uma lista de DTOs e a retorna.
-        //    Se a lista 'usuarios' estiver vazia, o resultado será uma lista vazia.
-        return usuarios.stream()
-                .map(usuarioMapper::toResponseDTO)
-                .toList();
+    public Page<UsuarioResponseDTO> listUsers(Pageable pageable) {
+        Page<Usuario> usuarios = usuarioRepository.findAll(pageable);
+        return usuarios.map(usuarioMapper::toResponseDTO);
     }
 
     @Transactional

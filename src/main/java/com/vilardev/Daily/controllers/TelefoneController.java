@@ -5,6 +5,9 @@ import com.vilardev.Daily.dtos.TelefoneResponseDTO;
 import com.vilardev.Daily.services.TelefoneService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -19,11 +22,12 @@ public class TelefoneController {
         this.telefoneService = telefoneService;
     }
 
-    // LIST TELEFONES BY USER
+    // LIST TELEFONES BY USER (paginated)
     @GetMapping
-    public ResponseEntity<java.util.List<TelefoneResponseDTO>> list(@PathVariable Long usuarioId) {
-        java.util.List<TelefoneResponseDTO> list = telefoneService.listByUsuario(usuarioId);
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<TelefoneResponseDTO>> list(@PathVariable Long usuarioId,
+                                                          @PageableDefault(size = 20) Pageable pageable) {
+        Page<TelefoneResponseDTO> page = telefoneService.listByUsuario(usuarioId, pageable);
+        return ResponseEntity.ok(page);
     }
 
     // GET TELEFONE BY ID

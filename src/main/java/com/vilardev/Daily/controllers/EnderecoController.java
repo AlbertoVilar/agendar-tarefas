@@ -5,6 +5,9 @@ import com.vilardev.Daily.dtos.EnderecoResponseDTO;
 import com.vilardev.Daily.services.EnderecoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -31,9 +34,10 @@ public class EnderecoController {
 
     // LIST ADDRESSES BY USER
     @GetMapping
-    public ResponseEntity<java.util.List<EnderecoResponseDTO>> list(@PathVariable Long usuarioId) {
-        java.util.List<EnderecoResponseDTO> list = enderecoService.listByUsuario(usuarioId);
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<EnderecoResponseDTO>> list(@PathVariable Long usuarioId,
+                                                          @PageableDefault(size = 20) Pageable pageable) {
+        Page<EnderecoResponseDTO> page = enderecoService.listByUsuario(usuarioId, pageable);
+        return ResponseEntity.ok(page);
     }
 
     // GET ADDRESS BY ID

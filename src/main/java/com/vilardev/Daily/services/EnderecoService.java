@@ -9,6 +9,8 @@ import com.vilardev.Daily.repositories.EnderecoRespository;
 import com.vilardev.Daily.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class EnderecoService {
@@ -47,7 +49,7 @@ public class EnderecoService {
 
     // LIST BY USER
     @Transactional(readOnly = true)
-    public java.util.List<EnderecoResponseDTO> listByUsuario(Long usuarioId) {
+    public Page<EnderecoResponseDTO> listByUsuario(Long usuarioId, Pageable pageable) {
         if (usuarioId == null) {
             throw new IllegalArgumentException("ID do usuário não pode ser nulo");
         }
@@ -55,10 +57,8 @@ public class EnderecoService {
         usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
 
-        java.util.List<Endereco> enderecos = enderecoRespository.findByUsuario_Id(usuarioId);
-        return enderecos.stream()
-                .map(enderecoMapper::toResponseDTO)
-                .toList();
+        Page<Endereco> enderecos = enderecoRespository.findByUsuario_Id(usuarioId, pageable);
+        return enderecos.map(enderecoMapper::toResponseDTO);
     }
 
     // GET BY ID
