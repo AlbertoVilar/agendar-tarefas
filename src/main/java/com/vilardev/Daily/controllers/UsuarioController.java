@@ -2,6 +2,7 @@ package com.vilardev.Daily.controllers;
 
 import com.vilardev.Daily.dtos.UsuarioRequestDTO;
 import com.vilardev.Daily.dtos.UsuarioResponseDTO;
+import com.vilardev.Daily.dtos.UsuarioUpdateDTO;
 import com.vilardev.Daily.services.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/usuarios")
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "controllers.usuario.enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -45,11 +51,11 @@ public class UsuarioController {
         return ResponseEntity.ok(list);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id,
-                                                     @RequestBody UsuarioRequestDTO requestDTO) {
-        // TODO: implementar lógica no service
-        UsuarioResponseDTO updated = usuarioService.updateUser(id, requestDTO);
+
+    // Atualiza os dados do usuário autenticado (email extraído do token)
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResponseDTO> updateMe(@RequestBody UsuarioUpdateDTO dto) {
+        UsuarioResponseDTO updated = usuarioService.updateMe(dto);
         return ResponseEntity.ok(updated);
     }
 

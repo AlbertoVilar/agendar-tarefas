@@ -1,27 +1,28 @@
 package com.vilardev.Daily.controllers;
 
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.vilardev.Daily.dtos.UsuarioResponseDTO;
+import com.vilardev.Daily.dtos.UsuarioUpdateDTO;
+import com.vilardev.Daily.services.UsuarioService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-
 @RestController
+@RequestMapping("/usuarios")
 public class MeController {
 
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> me(@AuthenticationPrincipal UserDetails user) {
-        List<String> roles = user.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-        return Map.of(
-                "username", user.getUsername(),
-                "roles", roles
-        );
+    private final UsuarioService usuarioService;
+
+    public MeController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
+    // Atualiza os dados do usuário autenticado (email extraído do token)
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResponseDTO> updateMe(@RequestBody UsuarioUpdateDTO dto) {
+        UsuarioResponseDTO updated = usuarioService.updateMe(dto);
+        return ResponseEntity.ok(updated);
     }
 }

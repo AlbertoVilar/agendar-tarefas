@@ -2,12 +2,12 @@ package com.vilardev.Daily.mappers;
 
 import com.vilardev.Daily.dtos.UsuarioRequestDTO;
 import com.vilardev.Daily.dtos.UsuarioResponseDTO;
+import com.vilardev.Daily.dtos.UsuarioUpdateDTO;
 import com.vilardev.Daily.infrastructury.entities.Usuario;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
+
+import java.lang.annotation.Target;
 
 @Mapper(
         componentModel = "spring",
@@ -26,9 +26,11 @@ public interface UsuarioMapper {
     // Entidade -> DTO de resposta
     UsuarioResponseDTO toResponseDTO(Usuario usuario);
 
-    // Atualização parcial da entidade a partir do DTO (sem alterar id/senha/roles diretamente)
+    // Atualização parcial específica para UsuarioUpdateDTO (ignora coleções e id)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "senha", ignore = true)
     @Mapping(target = "roles", ignore = true)
-    void updateEntityFromDto(UsuarioRequestDTO requestDTO, @MappingTarget Usuario usuario);
+    @Mapping(target = "enderecos", ignore = true)
+    @Mapping(target = "telefones", ignore = true)
+    void updateEntityFromDto(UsuarioUpdateDTO updateDTO, @MappingTarget Usuario entity);
 }
