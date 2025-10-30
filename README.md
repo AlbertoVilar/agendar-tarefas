@@ -27,6 +27,31 @@ java -jar target/daily-0.0.1-SNAPSHOT.jar
 java -jar target/daily-0.0.1-SNAPSHOT.jar --spring.profiles.active=test --server.port=8080
 ```
 
+### Usando Postgres
+
+Crie um banco `daily` e configure credenciais (padrão `postgres/postgres`). O perfil `postgres` usa `src/main/resources/application-postgres.properties`.
+
+- Executar com Maven:
+```
+mvn spring-boot:run -Dspring-boot.run.profiles=postgres -DskipTests
+```
+- Executar o JAR com perfil:
+```
+java -jar target/daily-0.0.1-SNAPSHOT.jar --spring.profiles.active=postgres
+```
+
+Propriedades padrão do perfil `postgres`:
+- `spring.datasource.url=jdbc:postgresql://localhost:5432/daily`
+- `spring.datasource.username=postgres`
+- `spring.datasource.password=postgres`
+- `spring.jpa.hibernate.ddl-auto=update`
+- `spring.sql.init.mode=always` (semeia `data.sql` com roles)
+
+Opcional via Docker:
+```
+docker run --name daily-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=daily -p 5432:5432 -d postgres:16
+```
+
 ## Seed de Roles
 O projeto carrega apenas as roles via `data.sql`:
 - `ROLE_USER`
