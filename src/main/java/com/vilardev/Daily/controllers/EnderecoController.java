@@ -28,4 +28,12 @@ public class EnderecoController {
                 .location(URI.create("/enderecos/" + (created != null ? created.id() : "")))
                 .body(created);
     }
+
+    // UPDATE ADDRESS
+    @PutMapping("/{id}")
+    public ResponseEntity<EnderecoResponseDTO> update(@PathVariable Long id,
+                                                      @RequestBody EnderecoRequestDTO requestDTO) {
+        EnderecoResponseDTO updated = enderecoService.update(id, requestDTO);
+        return ResponseEntity.ok(updated);
+    }
 }

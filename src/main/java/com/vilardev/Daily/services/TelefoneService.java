@@ -36,4 +36,21 @@ public class TelefoneService {
         Telefone saved = telefoneRepository.save(telefone);
         return telefoneMapper.toResponseDTO(saved);
     }
+
+    // UPDATE TELEFONE
+    @Transactional
+    public TelefoneResponseDTO update(Long id, TelefoneRequestDTO requestDTO) {
+        if (id == null || requestDTO == null) {
+            throw new IllegalArgumentException("ID do telefone e dados de requisição não podem ser nulos");
+        }
+
+        Telefone telefone = telefoneRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Telefone não encontrado com o id: " + id));
+
+        // Atualiza os campos do telefone com os dados do DTO
+        telefoneMapper.updateEntityFromDto(requestDTO, telefone);
+
+        Telefone savedTelefone = telefoneRepository.save(telefone);
+        return telefoneMapper.toResponseDTO(savedTelefone);
+    }
 }

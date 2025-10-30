@@ -28,5 +28,12 @@ public class TelefoneController {
                 .location(URI.create("/telefones/" + (created != null ? created.id() : "")))
                 .body(created);
     }
-}
 
+    // UPDATE TELEFONE
+    @PutMapping("/{id}")
+    public ResponseEntity<TelefoneResponseDTO> update(@PathVariable Long id,
+                                                       @RequestBody TelefoneRequestDTO requestDTO) {
+        TelefoneResponseDTO updated = telefoneService.update(id, requestDTO);
+        return ResponseEntity.ok(updated);
+    }
+}

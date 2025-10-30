@@ -27,13 +27,46 @@ public class EnderecoService {
 
     @Transactional
     public EnderecoResponseDTO addToUser(Long usuarioId, EnderecoRequestDTO requestDTO) {
+
+        //Verifi if user exists
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
 
+        //Convert DTO to Entity
         Endereco endereco = enderecoMapper.toEntity(requestDTO);
+
+        //Associate to user
         endereco.setUsuario(usuario);
 
+        //Save Address to DB
         Endereco saved = enderecoRespository.save(endereco);
+
+        //Convert Entity to ResponseDTO end return it;
         return enderecoMapper.toResponseDTO(saved);
+    }
+
+    // UPDATE ADDRESS
+    @Transactional
+    public EnderecoResponseDTO update(Long id, EnderecoRequestDTO requestDTO) {
+        if (id == null || requestDTO == null)  {
+            throw new IllegalArgumentException("ID do endereço e dados de requisição não podem ser nulos");
+        }
+
+        // Encontra o endereço ou lança uma exceção clara se não existir
+        Endereco endereco = enderecoRespository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Endereço não encontrado com o id: " + id));
+
+        // Atualiza a entidade com os dados do DTO
+        enderecoMapper.updateEntityFromDto(requestDTO, endereco);
+
+        // Salva (opcional, mas claro) e retorna o DTO de resposta
+        Endereco savedEndereco = enderecoRespository.save(endereco);
+        return enderecoMapper.toResponseDTO(savedEndereco);
+    }
+
+    // DELETE ADDRESS
+    @Transactional
+    public EnderecoResponseDTO delete(Long id) {
+        return  null;
     }
 }

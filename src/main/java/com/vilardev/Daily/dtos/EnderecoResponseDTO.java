@@ -4,6 +4,7 @@ public record EnderecoResponseDTO(
         Long id,
         String rua,
         Long numero,
+        String bairro,
         String complemento,
         String cidade,
         String estado,
