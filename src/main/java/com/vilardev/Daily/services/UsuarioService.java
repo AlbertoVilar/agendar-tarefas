@@ -14,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.HashSet;
@@ -93,19 +95,53 @@ public class UsuarioService {
         return usuarioMapper.toResponseDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public UsuarioResponseDTO getUserById(Long id) {
-        // TODO: implementar busca por ID (buscar, tratar not found, mapear para response)
-        throw new UnsupportedOperationException("getUserById não implementado");
+        if (id == null) {
+            throw new IllegalArgumentException("ID do usuário não pode ser nulo");
+        }
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o id: " + id));
+        return usuarioMapper.toResponseDTO(usuario);
     }
 
-    public List<UsuarioResponseDTO> listUsers() {
-        // TODO: implementar listagem (buscar todos e mapear para response)
-        throw new UnsupportedOperationException("listUsers não implementado");
+    // LIST ALL USERS (paginated)
+    @Transactional(readOnly = true)
+    public Page<UsuarioResponseDTO> listUsers(Pageable pageable) {
+        Page<Usuario> usuarios = usuarioRepository.findAll(pageable);
+        return usuarios.map(usuarioMapper::toResponseDTO);
     }
 
-    public UsuarioResponseDTO updateUser(Long id, UsuarioRequestDTO requestDTO) {
-        // TODO: implementar atualização por ID caso necessário
-        throw new UnsupportedOperationException("updateUser não implementado");
+    @Transactional
+    public UsuarioResponseDTO updateUser(Long id, UsuarioUpdateDTO dto) {
+        if (id == null || dto == null) {
+            throw new IllegalArgumentException("ID do usuário e dados de requisição não podem ser nulos");
+        }
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o id: " + id));
+
+        // Atualização de e-mail (se enviado e mudou)
+        if (dto.email() != null && !dto.email().isBlank()
+                && !dto.email().equalsIgnoreCase(usuario.getEmail())) {
+            String normalized = dto.email().trim().toLowerCase();
+
+            if (usuarioRepository.existsByEmail(normalized)) {
+                throw new IllegalArgumentException("E-mail já está em uso");
+            }
+            usuario.setEmail(normalized);
+        }
+
+        // Partial update via MapStruct (ignora null)
+        usuarioMapper.updateEntityFromDto(dto, usuario);
+
+        // Senha (se enviada)
+        if (dto.senha() != null && !dto.senha().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(dto.senha()));
+        }
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        return usuarioMapper.toResponseDTO(salvo);
     }
 
     @Transactional
@@ -151,8 +187,13 @@ public class UsuarioService {
         return name.trim().toLowerCase();
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-        // TODO: implementar remoção por ID
-        throw new UnsupportedOperationException("deleteUser não implementado");
+        if (id == null) {
+            throw new IllegalArgumentException("ID do usuário não pode ser nulo");
+        }
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o id: " + id));
+        usuarioRepository.delete(usuario);
     }
 }

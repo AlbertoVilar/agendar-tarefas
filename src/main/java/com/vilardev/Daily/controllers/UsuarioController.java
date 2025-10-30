@@ -6,6 +6,9 @@ import com.vilardev.Daily.dtos.UsuarioUpdateDTO;
 import com.vilardev.Daily.services.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -45,10 +48,17 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> list() {
-        // TODO: implementar lógica no service
-        List<UsuarioResponseDTO> list = usuarioService.listUsers();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<UsuarioResponseDTO>> list(@PageableDefault(size = 20) Pageable pageable) {
+        Page<UsuarioResponseDTO> page = usuarioService.listUsers(pageable);
+        return ResponseEntity.ok(page);
+    }
+
+    // Atualiza os dados de um usuário por ID (ADMIN ou fluxo específico)
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> updateById(@PathVariable Long id,
+                                                         @RequestBody UsuarioUpdateDTO dto) {
+        UsuarioResponseDTO updated = usuarioService.updateUser(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
 
