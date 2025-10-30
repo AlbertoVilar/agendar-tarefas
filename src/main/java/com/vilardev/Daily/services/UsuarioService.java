@@ -2,11 +2,15 @@ package com.vilardev.Daily.services;
 
 import com.vilardev.Daily.dtos.UsuarioRequestDTO;
 import com.vilardev.Daily.dtos.UsuarioResponseDTO;
+import com.vilardev.Daily.dtos.UsuarioUpdateDTO;
 import com.vilardev.Daily.infrastructury.entities.Usuario;
 import com.vilardev.Daily.infrastructury.entities.Role;
 import com.vilardev.Daily.mappers.UsuarioMapper;
 import com.vilardev.Daily.repositories.UsuarioRepository;
 import com.vilardev.Daily.repositories.RoleRepository;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,8 +104,51 @@ public class UsuarioService {
     }
 
     public UsuarioResponseDTO updateUser(Long id, UsuarioRequestDTO requestDTO) {
-        // TODO: implementar atualização (buscar existente, aplicar mudanças, salvar, mapear)
+        // TODO: implementar atualização por ID caso necessário
         throw new UnsupportedOperationException("updateUser não implementado");
+    }
+
+    @Transactional
+    public UsuarioResponseDTO updateMe(UsuarioUpdateDTO dto) {
+        // Obtém o e-mail do usuário autenticado a partir do SecurityContext (normalizado)
+        String emailFromToken = getCurrentUserEmail();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailFromToken)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        // Atualização de e-mail (se enviado e mudou)
+        if (dto.email() != null && !dto.email().isBlank()
+                && !dto.email().equalsIgnoreCase(usuario.getEmail())) {
+            String normalized = dto.email().trim().toLowerCase();
+
+            if (usuarioRepository.existsByEmail(normalized)) {
+                throw new IllegalArgumentException("E-mail já está em uso");
+            }
+            usuario.setEmail(normalized);
+        }
+        
+        // Partial update via MapStruct (ignora null)
+        usuarioMapper.updateEntityFromDto(dto, usuario);
+
+        // Senha (se enviada)
+        if (dto.senha() != null && !dto.senha().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(dto.senha()));
+        }
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        return usuarioMapper.toResponseDTO(salvo);
+    }
+
+    private String getCurrentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            throw new AccessDeniedException("Não autenticado");
+        }
+        String name = auth.getName();
+        if (name == null || name.isBlank()) {
+            throw new AccessDeniedException("Principal sem e-mail válido");
+        }
+        return name.trim().toLowerCase();
     }
 
     public void deleteUser(Long id) {
