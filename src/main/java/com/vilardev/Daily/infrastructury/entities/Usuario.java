@@ -15,7 +15,9 @@ import java.util.HashSet;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "usuario")
+@Table(name = "usuario", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "email")
+})
 @Builder
 public class Usuario implements UserDetails {
 
@@ -26,7 +28,7 @@ public class Usuario implements UserDetails {
     @Column(name = "nome", length = 100)
     private String nome;
 
-    @Column(name = "email", length = 100)
+    @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
 
     @Column(name = "senha")

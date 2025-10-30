@@ -4,6 +4,7 @@ import com.vilardev.Daily.dtos.TelefoneRequestDTO;
 import com.vilardev.Daily.dtos.TelefoneResponseDTO;
 import com.vilardev.Daily.infrastructury.entities.Telefone;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
@@ -14,6 +15,7 @@ public interface TelefoneMapper {
     Telefone toEntity(TelefoneRequestDTO telefoneRequestDTO);
 
     // Telefone para TelefoneResponseDTO
+    @Mapping(target = "usuarioId", source = "usuario.id")
     TelefoneResponseDTO toResponseDTO(Telefone telefone);
 
     // Telefone update

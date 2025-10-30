@@ -5,13 +5,12 @@ import com.vilardev.Daily.dtos.EnderecoResponseDTO;
 import com.vilardev.Daily.services.EnderecoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
-@RequestMapping("/enderecos")
+@RequestMapping("/usuarios/{usuarioId}/enderecos")
 public class EnderecoController {
 
     private final EnderecoService enderecoService;
@@ -21,9 +20,12 @@ public class EnderecoController {
     }
 
     @PostMapping
-    public ResponseEntity<EnderecoResponseDTO> createAddress(@RequestBody EnderecoRequestDTO requestDTO) {
-        EnderecoResponseDTO responseDTO = enderecoService.createNewAddress(requestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+    public ResponseEntity<EnderecoResponseDTO> create(@PathVariable Long usuarioId,
+                                                      @RequestBody EnderecoRequestDTO requestDTO) {
+        EnderecoResponseDTO created = enderecoService.addToUser(usuarioId, requestDTO);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .location(URI.create("/enderecos/" + (created != null ? created.id() : "")))
+                .body(created);
     }
-
 }

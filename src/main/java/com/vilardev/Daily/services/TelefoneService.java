@@ -3,24 +3,37 @@ package com.vilardev.Daily.services;
 import com.vilardev.Daily.dtos.TelefoneRequestDTO;
 import com.vilardev.Daily.dtos.TelefoneResponseDTO;
 import com.vilardev.Daily.infrastructury.entities.Telefone;
+import com.vilardev.Daily.infrastructury.entities.Usuario;
 import com.vilardev.Daily.mappers.TelefoneMapper;
 import com.vilardev.Daily.repositories.TelefoneRepository;
+import com.vilardev.Daily.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TelefoneService {
 
+    private final UsuarioRepository usuarioRepository;
     private final TelefoneRepository telefoneRepository;
     private final TelefoneMapper telefoneMapper;
 
-    public TelefoneService(TelefoneRepository telefoneRepository, TelefoneMapper telefoneMapper) {
+    public TelefoneService(UsuarioRepository usuarioRepository,
+                           TelefoneRepository telefoneRepository,
+                           TelefoneMapper telefoneMapper) {
+        this.usuarioRepository = usuarioRepository;
         this.telefoneRepository = telefoneRepository;
         this.telefoneMapper = telefoneMapper;
     }
 
-    public TelefoneResponseDTO creatTelefone(TelefoneRequestDTO requestDTO) {
+    @Transactional
+    public TelefoneResponseDTO addToUser(Long usuarioId, TelefoneRequestDTO requestDTO) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
 
-        Telefone telefone = telefoneRepository.save(telefoneMapper.toEntity(requestDTO));
-        return telefoneMapper.toResponseDTO(telefone);
+        Telefone telefone = telefoneMapper.toEntity(requestDTO);
+        telefone.setUsuario(usuario);
+
+        Telefone saved = telefoneRepository.save(telefone);
+        return telefoneMapper.toResponseDTO(saved);
     }
 }

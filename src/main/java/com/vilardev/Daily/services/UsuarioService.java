@@ -3,13 +3,17 @@ package com.vilardev.Daily.services;
 import com.vilardev.Daily.dtos.UsuarioRequestDTO;
 import com.vilardev.Daily.dtos.UsuarioResponseDTO;
 import com.vilardev.Daily.infrastructury.entities.Usuario;
+import com.vilardev.Daily.infrastructury.entities.Role;
 import com.vilardev.Daily.mappers.UsuarioMapper;
 import com.vilardev.Daily.repositories.UsuarioRepository;
+import com.vilardev.Daily.repositories.RoleRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class UsuarioService {
@@ -17,26 +21,31 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
     public UsuarioService(UsuarioRepository usuarioRepository,
                           UsuarioMapper usuarioMapper,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          RoleRepository roleRepository) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @Transactional
     public UsuarioResponseDTO createUser(UsuarioRequestDTO requestDTO) {
-        // Validar unicidade de e-mail
-        if (requestDTO == null || requestDTO.email() == null || requestDTO.email().isBlank()) {
+        // Validar e normalizar e-mail (trim + lowercase)
+        if (requestDTO == null || requestDTO.email() == null || requestDTO.email().trim().isEmpty()) {
             throw new IllegalArgumentException("E-mail é obrigatório");
         }
-        if (usuarioRepository.existsByEmail(requestDTO.email())) {
+        String normalizedEmail = requestDTO.email().trim().toLowerCase();
+        if (usuarioRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException("E-mail já utilizado");
         }
 
         // Mapear DTO -> entidade
         Usuario usuario = usuarioMapper.toEntity(requestDTO);
+        usuario.setEmail(normalizedEmail);
 
         // Senha: encode (se fornecida)
         if (requestDTO.senha() != null && !requestDTO.senha().isBlank()) {
@@ -55,8 +64,23 @@ public class UsuarioService {
             });
         }
 
-        // TODO: Mapear roles a partir de nomes (ex.: via RoleRepository)
-        // usuario.setRoles(...);
+        // Roles: mapear por nome (se vierem) e garantir ROLE_USER
+        Set<Role> rolesToAssign = new HashSet<>();
+        if (requestDTO.roles() != null && !requestDTO.roles().isEmpty()) {
+            for (String roleName : requestDTO.roles()) {
+                if (roleName == null || roleName.isBlank()) continue;
+                Role role = roleRepository.findByNomeRole(roleName)
+                        .orElseThrow(() -> new IllegalArgumentException("Role não encontrada: " + roleName));
+                rolesToAssign.add(role);
+            }
+        }
+
+        // Garante ROLE_USER sempre presente
+        Role roleUser = roleRepository.findByNomeRole("ROLE_USER")
+                .orElseThrow(() -> new IllegalStateException("ROLE_USER não encontrada na base"));
+        rolesToAssign.add(roleUser);
+
+        usuario.setRoles(rolesToAssign);
 
         // Persistir
         Usuario saved = usuarioRepository.save(usuario);

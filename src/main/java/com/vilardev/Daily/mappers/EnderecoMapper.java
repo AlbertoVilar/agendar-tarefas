@@ -12,6 +12,7 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface EnderecoMapper {
 
+    @Mapping(target = "usuarioId", source = "usuario.id")
     EnderecoResponseDTO toResponseDTO(Endereco endereco);
 
     Endereco toEntity(EnderecoRequestDTO enderecoRequestDTO);

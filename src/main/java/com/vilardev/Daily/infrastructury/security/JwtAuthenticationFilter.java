@@ -1,6 +1,8 @@
 package com.vilardev.Daily.infrastructury.security;
 
 import com.vilardev.Daily.application.security.TokenService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     private final UserDetailsService userDetailsService;
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     public JwtAuthenticationFilter(TokenService tokenService, UserDetailsService userDetailsService) {
         this.tokenService = tokenService;
@@ -37,37 +40,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
-        System.out.println("JwtAuthenticationFilter - Authorization header: " + header);
+        if (log.isDebugEnabled()) {
+            log.debug("JwtAuthenticationFilter - Authorization header present? {}", header != null);
+        }
 
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            System.out.println("JwtAuthenticationFilter - Extracted token: " + token.substring(0, Math.min(20, token.length())) + "...");
+            if (log.isDebugEnabled()) {
+                String preview = token.substring(0, Math.min(12, token.length()));
+                log.debug("JwtAuthenticationFilter - Extracted token preview: {}...", preview);
+            }
 
             try {
                 boolean isValid = tokenService.validateToken(token);
-                System.out.println("JwtAuthenticationFilter - Token valid: " + isValid);
+                if (log.isDebugEnabled()) {
+                    log.debug("JwtAuthenticationFilter - Token valid: {}", isValid);
+                }
                 
                 if (isValid) {
                     String username = tokenService.getUsernameFromToken(token);
-                    System.out.println("JwtAuthenticationFilter - Username from token: " + username);
+                    if (log.isDebugEnabled()) {
+                        log.debug("JwtAuthenticationFilter - Username from token: {}", username);
+                    }
                     
                     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        System.out.println("JwtAuthenticationFilter - UserDetails loaded: " + userDetails.getUsername());
+                        if (log.isDebugEnabled()) {
+                            log.debug("JwtAuthenticationFilter - UserDetails loaded: {}", userDetails.getUsername());
+                        }
                         
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        System.out.println("JwtAuthenticationFilter - Authentication set in SecurityContext");
+                        if (log.isDebugEnabled()) {
+                            log.debug("JwtAuthenticationFilter - Authentication set in SecurityContext");
+                        }
                     }
                 }
             } catch (Exception ex) {
-                System.out.println("JwtAuthenticationFilter - Exception: " + ex.getMessage());
-                ex.printStackTrace();
+                log.error("JwtAuthenticationFilter - Exception during token processing: {}", ex.getMessage(), ex);
             }
         } else {
-            System.out.println("JwtAuthenticationFilter - No Bearer token found");
+            if (log.isDebugEnabled()) {
+                log.debug("JwtAuthenticationFilter - No Bearer token found");
+            }
         }
 
         filterChain.doFilter(request, response);
