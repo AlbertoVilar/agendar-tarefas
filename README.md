@@ -27,6 +27,30 @@ java -jar target/daily-0.0.1-SNAPSHOT.jar
 java -jar target/daily-0.0.1-SNAPSHOT.jar --spring.profiles.active=test --server.port=8080
 ```
 
+### Com Docker Compose
+
+Este projeto já inclui `Dockerfile` multi-stage e `docker-compose.yml` com Postgres.
+
+- Subir banco e app (perfil `postgres`):
+```
+docker compose up -d --build app
+```
+- Ver logs da aplicação:
+```
+docker compose logs -f app
+```
+- Parar serviços:
+```
+docker compose down
+```
+
+Configurações relevantes (já definidas no compose):
+- `SPRING_PROFILES_ACTIVE=postgres`
+- `SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/daily`
+- `SPRING_DATASOURCE_USERNAME=postgres`
+- `SPRING_DATASOURCE_PASSWORD=postgres`
+- `CONTROLLERS_USUARIO_ENABLED=true` (habilita endpoints de usuários)
+
 ### Usando Postgres
 
 Crie um banco `daily` e configure credenciais (padrão `postgres/postgres`). O perfil `postgres` usa `src/main/resources/application-postgres.properties`.
@@ -51,6 +75,8 @@ Opcional via Docker:
 ```
 docker run --name daily-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=daily -p 5432:5432 -d postgres:16
 ```
+
+Com `docker compose`, não é necessário executar o comando acima; o serviço `db` será criado automaticamente.
 
 ## Seed de Roles
 O projeto carrega apenas as roles via `data.sql`:
