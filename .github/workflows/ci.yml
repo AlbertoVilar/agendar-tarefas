@@ -1,11 +1,20 @@
 name: Java CI com Maven (Daily)
 
 on:
-  # O Action irá rodar em qualquer push ou pull request para as branches develop ou master
+  # Dispara em push nas branches principais e em feature/*, e em PRs para as principais
   push:
-    branches: [ develop, master ]
+    branches:
+      - main
+      - master
+      - develop
+      - 'feature/**'
   pull_request:
-    branches: [ develop, master ]
+    branches:
+      - main
+      - master
+      - develop
+  # Permite execução manual pelo Actions
+  workflow_dispatch:
 
 jobs:
   build:
